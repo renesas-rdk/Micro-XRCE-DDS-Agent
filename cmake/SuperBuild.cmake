@@ -133,6 +133,15 @@ if(UAGENT_FAST_PROFILE AND NOT UAGENT_USE_SYSTEM_FASTDDS)
         set(_fastdds_cache_args
                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
                 -DCMAKE_PREFIX_PATH:PATH=${CMAKE_PREFIX_PATH};${PROJECT_BINARY_DIR}/temp_install
+                # Point Fast-DDS at the SuperBuild's OWN FastCDR (same as the uagent target below)
+                # so it reuses the shared FastCDR instead of building its bundled thirdparty/fastcdr.
+                # Without this, Fast-DDS only resolves FastCDR via find_package over the prefix, which
+                # is fragile under a cross toolchain's CMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY +
+                # per-dependency prefix entries: once temp_install is populated the lookup misses and
+                # Fast-DDS falls back to its bundled FastCDR (a DIFFERENT version) — splitting the
+                # FastCDR ABI between libfastdds and the agent. (foonathan_memory_DIR is passed below
+                # for the same reason; fastcdr_DIR was simply omitted here.)
+                -Dfastcdr_DIR:PATH=${PROJECT_BINARY_DIR}/temp_install/fastcdr-${_fastcdr_version}/lib/cmake/fastcdr
                 -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
                 -DCMAKE_TOOLCHAIN_FILE:PATH=${CMAKE_TOOLCHAIN_FILE}
                 ${CROSS_CMAKE_ARGS}

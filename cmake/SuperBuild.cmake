@@ -26,11 +26,16 @@ if(ANDROID)
         )
 endif()
 
-# Pass Poky environment setup path to ExternalProject subprocesses so cross.cmake can source it
-if(DEFINED ENV{POKY_ENVIRONMENT_SETUP})
-    list(APPEND CROSS_CMAKE_ARGS -DPOKY_ENVIRONMENT_SETUP:STRING=$ENV{POKY_ENVIRONMENT_SETUP})
-elseif(DEFINED POKY_ENVIRONMENT_SETUP)
+# Pass Poky environment setup path to ExternalProject subprocesses so cross.cmake can source it.
+# Cache variable (explicit -D) is checked FIRST and takes precedence over an inherited environment
+# variable: compile.sh always exports POKY_ENVIRONMENT_SETUP, so an env-first check meant the
+# ${POKY_ENVIRONMENT_SETUP} cache dereference below was never reached whenever both were set --
+# CMake then reports the -D value as an unused "manually-specified variable" even though it always
+# agreed with the env var in practice.
+if(DEFINED POKY_ENVIRONMENT_SETUP)
     list(APPEND CROSS_CMAKE_ARGS -DPOKY_ENVIRONMENT_SETUP:STRING=${POKY_ENVIRONMENT_SETUP})
+elseif(DEFINED ENV{POKY_ENVIRONMENT_SETUP})
+    list(APPEND CROSS_CMAKE_ARGS -DPOKY_ENVIRONMENT_SETUP:STRING=$ENV{POKY_ENVIRONMENT_SETUP})
 endif()
 
 if(UAGENT_P2P_PROFILE)
